@@ -8,28 +8,53 @@ type IState = {
   people: person[];
 };
 
+type data = {
+  weight: number;
+  date: Date;
+};
+
 interface person {
   id: string;
   name: string;
-  weight: number[];
-  date: Date[];
+  data: data[];
 }
 
 export default class App extends React.Component<any, IState> {
   readonly state: IState = { people: [] };
 
-  _addPerson = () => {
-    this.setState({
-      people: this.state.people.concat({
-        id: generate(),
-        name: '',
-        weight: [],
-        date: [],
-      }),
-    });
+  async componentDidMount() {
+    const data: string | null = localStorage.getItem('weight-tracker-data');
+    const people: person[] = JSON.parse(data || '[]');
+    if (people) {
+      await this.setState({ people });
+    }
+  }
+
+  _addPerson = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const target = e.target as typeof e.target & {
+      name: { value: string };
+    };
+
+    this.setState(
+      {
+        people: this.state.people.concat({
+          id: generate(),
+          name: target.name.value,
+          data: [],
+        }),
+      },
+      () => {
+        localStorage.setItem(
+          'weight-tracker-data',
+          JSON.stringify(this.state.people)
+        );
+      }
+    );
   };
 
-  _updateInformations = (id: string) => (e: React.SyntheticEvent) => {
+  _updateInformation = (id: string) => (e: React.FormEvent): void => {
     e.preventDefault();
 
     const target = e.target as typeof e.target & {
@@ -43,14 +68,18 @@ export default class App extends React.Component<any, IState> {
     const people: person[] = [...this.state.people];
     map(people, (person: person) => {
       if (person.id === id) {
-        person.weight.push(weight);
-        person.date.push(date);
+        person.data.push({ weight, date });
       }
     });
 
     this.setState({
       people,
     });
+
+    localStorage.setItem(
+      'weight-tracker-data',
+      JSON.stringify(this.state.people)
+    );
   };
 
   render() {
@@ -63,11 +92,17 @@ export default class App extends React.Component<any, IState> {
                 key={person.id}
                 id={person.id}
                 name={person.name}
-                update={this._updateInformations}
+                data={person.data}
+                update={this._updateInformation}
               />
             );
           })}
-        <button onClick={this._addPerson}>Add person</button>
+        <form onSubmit={this._addPerson}>
+          <label htmlFor=''>
+            <input type='text' name='name' id='person-name' />
+          </label>
+          <button>Add person</button>
+        </form>
       </div>
     );
   }

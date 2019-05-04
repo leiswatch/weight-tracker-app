@@ -2,7 +2,7 @@ import React from 'react';
 
 const Form: React.FC<{
   id: string;
-  update: (id: string) => (event: React.SyntheticEvent) => void;
+  update: (id: string) => (event: React.FormEvent) => void;
 }> = ({ update, id }) => {
   return (
     <div>
